@@ -1,7 +1,6 @@
 package com.yupi.springbootinit.controller;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.springbootinit.annotation.AuthCheck;
@@ -13,26 +12,23 @@ import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.constant.UserConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
-import com.yupi.springbootinit.model.dto.chart.ChartAddRequest;
-import com.yupi.springbootinit.model.dto.chart.ChartEditRequest;
-import com.yupi.springbootinit.model.dto.chart.ChartQueryRequest;
-import com.yupi.springbootinit.model.dto.chart.ChartUpdateRequest;
-import com.yupi.springbootinit.model.dto.post.PostQueryRequest;
+import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.entity.Chart;
-import com.yupi.springbootinit.model.entity.Post;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.UserService;
+import com.yupi.springbootinit.utils.ExcelUtils;
 import com.yupi.springbootinit.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
+
 
 /**
  * 帖子接口
@@ -52,6 +48,31 @@ public class ChartController {
     private UserService userService;
 
     // region 增删改查
+
+    /**
+     * 创建
+     *
+     * @param genChartByAiRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/add")
+    public BaseResponse<String> genChartByAi(@RequestPart("file")MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest,
+                                         HttpServletRequest request) {
+     String gogal = genChartByAiRequest.getGoal();
+     String name = genChartByAiRequest.getName();
+     String chartType = genChartByAiRequest.getChartType();
+     //校验
+     ThrowUtils.throwIf(StringUtils.isBlank(gogal),ErrorCode.PARAMS_ERROR,"目标不能为空");
+     ThrowUtils.throwIf((StringUtils.isNotBlank(name)&&name.length()>100),ErrorCode.PARAMS_ERROR,"名称过长");
+     //拼接数据
+     StringBuilder stringBuilder = new StringBuilder();
+     stringBuilder.append("你是一个数据分析师，接下来我会给你我的分析目标和原始数据，请告诉我分析结论。").append("/n");
+     stringBuilder.append("分析目标：").append(gogal).append("/n");
+     stringBuilder.append("原始数据：").append(ExcelUtils.excelToCsv(multipartFile)).append("/n");
+
+        return ResultUtils.success(stringBuilder.toString());
+    }
 
     /**
      * 创建
@@ -242,7 +263,7 @@ public class ChartController {
             return queryWrapper;
         }
         Long id = chartQueryRequest.getId();
-        String goal = chartQueryRequest.getGogal();
+        String goal = chartQueryRequest.getGoal();
         String chartType = chartQueryRequest.getChartType();
         Long userId = chartQueryRequest.getUserId();
         String sortField = chartQueryRequest.getSortField();

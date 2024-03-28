@@ -22,7 +22,12 @@ public class Chart implements Serializable {
     /**
      * 分析目标
      */
-    private String gogal;
+    private String goal;
+
+    /**
+     * 名称
+     */
+    private String name;
 
     /**
      * 图表数据

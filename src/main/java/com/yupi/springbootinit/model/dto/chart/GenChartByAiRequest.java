@@ -1,6 +1,7 @@
 package com.yupi.springbootinit.model.dto.chart;
 
 import lombok.Data;
+
 import java.io.Serializable;
 
 
@@ -11,16 +12,16 @@ import java.io.Serializable;
  * 
  */
 @Data
-public class ChartAddRequest implements Serializable {
+public class GenChartByAiRequest implements Serializable {
     /**
      * 分析目标
      */
-    private String gogal;
+    private String goal;
 
     /**
-     * 图表数据
+     * 名称
      */
-    private String chartData;
+    private String name;
 
     /**
      * 图表类型
