@@ -37,7 +37,7 @@ public class ExcelUtils {
        } catch (IOException e) {
            log.error("表格读取错误",e);
        }
-       if(CollUtil.isEmpty(list))){
+       if(CollUtil.isEmpty(list)){
             return "";
        }
        StringBuilder builder = new StringBuilder();

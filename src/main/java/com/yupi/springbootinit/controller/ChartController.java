@@ -56,7 +56,7 @@ public class ChartController {
      * @param request
      * @return
      */
-    @PostMapping("/add")
+    @PostMapping("/add/genChar")
     public BaseResponse<String> genChartByAi(@RequestPart("file")MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest,
                                          HttpServletRequest request) {
      String gogal = genChartByAiRequest.getGoal();
@@ -168,7 +168,7 @@ public class ChartController {
      * @param chartQueryRequest
      * @return
      */
-    @PostMapping("/list/page")
+    @PostMapping("/list/page/admin")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Chart>> listChartByPage(@RequestBody ChartQueryRequest chartQueryRequest) {
         long current = chartQueryRequest.getCurrent();

@@ -82,6 +82,10 @@ wx:
   open:
     appId: xxx
     appSecret: xxx
+yuapi:
+  client:
+    access-key: o7v72gy3l48t7l52uzngxymcbs9l6f4i
+    secret-key: 6lpitxuzhrz1sgb0jpc3r1vnapmbwux1
 # 对象存储
 # todo 需替换配置
 cos:
