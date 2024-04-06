@@ -14,9 +14,9 @@ import javax.annotation.Resource;
 public class AiManager {
     @Resource
     private YuCongMingClient client;
-    public String doChat(String message){
+    public String doChat(Long modelId, String message){
         DevChatRequest devChatRequest = new DevChatRequest();
-        devChatRequest.setModelId(1776087956738945025L);
+        devChatRequest.setModelId(modelId);
         devChatRequest.setMessage(message);
         BaseResponse<DevChatResponse> response = client.doChat(devChatRequest);
         if(response == null){

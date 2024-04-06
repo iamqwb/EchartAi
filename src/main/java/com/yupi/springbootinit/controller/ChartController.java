@@ -12,9 +12,11 @@ import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.constant.UserConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
+import com.yupi.springbootinit.manager.AiManager;
 import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.User;
+import com.yupi.springbootinit.model.vo.BiResponse;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.UserService;
 import com.yupi.springbootinit.utils.ExcelUtils;
@@ -47,6 +49,9 @@ public class ChartController {
     @Resource
     private UserService userService;
 
+    @Resource
+    private AiManager aiManager;
+
     // region 增删改查
 
     /**
@@ -56,22 +61,54 @@ public class ChartController {
      * @param request
      * @return
      */
-    @PostMapping("/add/genChar")
-    public BaseResponse<String> genChartByAi(@RequestPart("file")MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest,
-                                         HttpServletRequest request) {
-     String gogal = genChartByAiRequest.getGoal();
+    @PostMapping("/gen")
+    public BaseResponse<BiResponse> genChartByAi(@RequestPart("file")MultipartFile multipartFile, GenChartByAiRequest genChartByAiRequest,
+                                                 HttpServletRequest request) {
+     String goal = genChartByAiRequest.getGoal();
      String name = genChartByAiRequest.getName();
      String chartType = genChartByAiRequest.getChartType();
-     //校验
-     ThrowUtils.throwIf(StringUtils.isBlank(gogal),ErrorCode.PARAMS_ERROR,"目标不能为空");
-     ThrowUtils.throwIf((StringUtils.isNotBlank(name)&&name.length()>100),ErrorCode.PARAMS_ERROR,"名称过长");
-     //拼接数据
-     StringBuilder stringBuilder = new StringBuilder();
-     stringBuilder.append("你是一个数据分析师，接下来我会给你我的分析目标和原始数据，请告诉我分析结论。").append("/n");
-     stringBuilder.append("分析目标：").append(gogal).append("/n");
-     stringBuilder.append("原始数据：").append(ExcelUtils.excelToCsv(multipartFile)).append("/n");
 
-        return ResultUtils.success(stringBuilder.toString());
+     Long modelId = 1776087956738945025L;
+     //校验
+     ThrowUtils.throwIf(StringUtils.isBlank(goal),ErrorCode.PARAMS_ERROR,"目标不能为空");
+     ThrowUtils.throwIf((StringUtils.isNotBlank(name)&&name.length()>100),ErrorCode.PARAMS_ERROR,"名称过长");
+     User loginUser = userService.getLoginUser(request);
+     //拼接数据
+     StringBuilder userInput = new StringBuilder();
+     userInput.append("分析需求：").append("/n");
+     String usergoal = goal;
+     if (StringUtils.isNotBlank(chartType)) {
+         usergoal = usergoal + "，请使用" + chartType;
+     }
+     userInput.append(usergoal).append("/n");
+     userInput.append("原始数据：").append("/n");
+     String csvData = ExcelUtils.excelToCsv(multipartFile);
+     userInput.append(csvData).append("/n");
+
+     String aiRturnMassage = aiManager.doChat(modelId,userInput.toString());
+     String[]  splits = aiRturnMassage.split("【【【【【");
+     if (splits.length<3) {
+         return ResultUtils.error(ErrorCode.SYSTEM_ERROR,"AI返回数据异常");
+     }
+        String genChart = splits[1].trim();
+        String genResult = splits[2].trim();
+        // 插入到数据库
+        Chart chart = new Chart();
+        chart.setName(name);
+        chart.setGoal(goal);
+        chart.setChartData(csvData);
+        chart.setChartType(chartType);
+        chart.setGenChart(genChart);
+        chart.setGenResult(genResult);
+        chart.setUserId(loginUser.getId());
+        boolean saveResult = chartService.save(chart);
+        ThrowUtils.throwIf(!saveResult, ErrorCode.SYSTEM_ERROR, "图表保存失败");
+        BiResponse biResponse = new BiResponse();
+        biResponse.setGenChart(genChart);
+        biResponse.setGenResult(genResult);
+        biResponse.setChartId(chart.getId());
+        return ResultUtils.success(biResponse);
+
     }
 
     /**
